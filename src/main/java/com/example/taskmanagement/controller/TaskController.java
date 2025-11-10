@@ -93,7 +93,7 @@ public class TaskController {
         // Case 1: An 'id' parameter is provided. Delete the specific task.
         if (id != null) {
             if (!taskService.getTaskById(id).isPresent()) {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.noContent().build();
             }
             taskService.deleteTask(id);
         } else {
