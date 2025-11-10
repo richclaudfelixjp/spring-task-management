@@ -1,1 +1,1 @@
-# java-task-management
+# spring-task-management

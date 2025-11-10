@@ -8,9 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
  * REST controller for managing tasks.
  * This class defines the API endpoints for CRUD operations on tasks.

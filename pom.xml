@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>task-management</artifactId>
+	<artifactId>spring-task-management</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>task-management</name>
-	<description>Demo project for Spring Boot</description>
+	<name>spring-task-management</name>
+	<description>Task Management Application in Spring Boot</description>
 	<url/>
 	<licenses>
 		<license/>
