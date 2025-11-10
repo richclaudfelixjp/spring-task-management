@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for managing tasks.
@@ -58,7 +59,7 @@ public class TaskController {
      * @return The created task with a 201 Created status.
      */
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody TaskCreationRequest taskRequest) {
+    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskCreationRequest taskRequest) {
         Task createdTask = taskService.createTask(taskRequest);
         return new ResponseEntity<>(createdTask, HttpStatus.CREATED);
     }
