@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
  * This class defines the API endpoints for CRUD operations on tasks.
  */
 @RestController
-@RequestMapping("/api/tasks") // Base path for all endpoints in this controller
+@RequestMapping("/tasks") // Base path for all endpoints in this controller
 public class TaskController {
 
     private final TaskService taskService;
@@ -36,17 +36,21 @@ public class TaskController {
      * - If an 'id' parameter is provided, retrieves a single task by its ID.
      * - Any other parameters (e.g., title, description, status) will result in a 400 Bad Request.
      * @param id          Optional ID of the task to retrieve.
+     * @param completed   Optional completion status to filter tasks.
      * @return A list of all tasks, a single task, or a 400/404 error.
      */
     @GetMapping
-    public ResponseEntity<?> getTasks(@RequestParam(required = false) Long id) {
+    public ResponseEntity<?> getTasks(@RequestParam(required = false) Long id,
+                                      @RequestParam(required = false) Boolean completed) {
         // Case 1: An 'id' parameter is provided.
         if (id != null) {
             return taskService.getTaskById(id)
                         .<ResponseEntity<?>>map(ResponseEntity::ok)
                         .orElse(ResponseEntity.notFound().build());
+        } else if (completed != null) {
+            // Case 2: A 'completed' parameter is provided. Return tasks filtered by completion status.
+            return ResponseEntity.ok(taskService.getTasksByCompletionStatus(completed));
         } else {
-            // Case 2: No parameters are provided. Return all tasks.
             return ResponseEntity.ok(taskService.getAllTasks());
         }
     }

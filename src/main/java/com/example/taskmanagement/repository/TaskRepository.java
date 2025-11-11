@@ -4,6 +4,8 @@ import com.example.taskmanagement.model.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * The TaskRepository interface is a Spring Data JPA repository for Task entities.
  * By extending JpaRepository, we get a lot of standard CRUD (Create, Read, Update, Delete)
@@ -26,4 +28,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // For example, if we wanted to find all tasks by their completion status, we could add:
     // List<Task> findByCompleted(boolean completed);
     // Spring Data JPA would automatically implement this method for us based on its name.
+
+    List<Task> findByCompleted(Boolean completed);
 }

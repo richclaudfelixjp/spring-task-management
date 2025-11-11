@@ -49,6 +49,10 @@ public class TaskService {
         return taskRepository.findById(id);
     }
 
+    public List<Task> getTasksByCompletionStatus(Boolean completed) {
+        return taskRepository.findByCompleted(completed);
+    }
+
     /**
      * Creates and saves a new task.
      *

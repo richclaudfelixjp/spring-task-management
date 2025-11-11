@@ -57,7 +57,7 @@ public class TaskControllerTest {
         when(taskService.getAllTasks()).thenReturn(allTasks);
 
         // Act & Assert
-        mockMvc.perform(get("/api/tasks"))
+        mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.length()").value(2))
@@ -79,7 +79,7 @@ public class TaskControllerTest {
         when(taskService.getTaskById(task.getId())).thenReturn(Optional.of(task));
 
         // Act & Assert
-        mockMvc.perform(get("/api/tasks").param("id", String.valueOf(task.getId())))
+        mockMvc.perform(get("/tasks").param("id", String.valueOf(task.getId())))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.id").value(task.getId()))
@@ -95,8 +95,42 @@ public class TaskControllerTest {
         when(taskService.getTaskById(invalidId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/api/tasks").param("id", String.valueOf(invalidId)))
+        mockMvc.perform(get("/tasks").param("id", String.valueOf(invalidId)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getTasks_whenValidCompleted_shouldReturnCompletedTasks() throws Exception {
+        Task task1 = new Task();
+        Task task2 = new Task();
+
+        task1.setId(1L);
+        task1.setTitle("title1");
+        task1.setDescription("description1");
+        task1.setCompleted(true);
+
+        task2.setId(2L);
+        task2.setTitle("title2");
+        task2.setDescription("description2");
+        task2.setCompleted(false);
+
+        List<Task> completedTasks = Arrays.asList(task1);
+
+        when(taskService.getTasksByCompletionStatus(true)).thenReturn(completedTasks);
+        // Act & Assert
+        mockMvc.perform(get("/tasks").param("completed", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].title").value("title1"))
+                .andExpect(jsonPath("$[0].completed").value(true));
+    }
+
+    @Test
+    void getTasks_whenInvalidCompleted_shouldBadRequest() throws Exception {
+        mockMvc.perform(get("/tasks").param("completed", "invalid"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -116,7 +150,7 @@ public class TaskControllerTest {
         when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
         
         // Act & Assert
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/tasks")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated()) // 2. Change to isCreated() for a 201 status
@@ -144,7 +178,7 @@ public class TaskControllerTest {
         when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
         
         // Act & Assert
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/tasks")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest()); // 2. Change to isBadRequest() for a 400 status
@@ -164,7 +198,7 @@ public class TaskControllerTest {
         when(taskService.updateTask(any(Task.class))).thenReturn(Optional.of(updateDetails));
 
         // Act & Assert
-        mockMvc.perform(put("/api/tasks") // The URL is correct for your controller
+        mockMvc.perform(put("/tasks") // The URL is correct for your controller
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateDetails)))
                 .andExpect(status().isOk())
@@ -183,7 +217,7 @@ public class TaskControllerTest {
         when(taskService.updateTask(any(Task.class))).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(put("/api/tasks") // The URL is correct
+        mockMvc.perform(put("/tasks") // The URL is correct
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateDetailsWithInvalidId)))
                 .andExpect(status().isNotFound());                
@@ -195,7 +229,7 @@ public class TaskControllerTest {
         doNothing().when(taskService).deleteAllTasks();
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
-        mockMvc.perform(delete("/api/tasks"))
+        mockMvc.perform(delete("/tasks"))
                 .andExpect(status().isNoContent());
     }
 
@@ -207,7 +241,7 @@ public class TaskControllerTest {
         doNothing().when(taskService).deleteTask(taskId);
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
-        mockMvc.perform(delete("/api/tasks/{id}", taskId))
+        mockMvc.perform(delete("/tasks/{id}", taskId))
                 .andExpect(status().isNotFound());
     }
 
@@ -220,7 +254,7 @@ public class TaskControllerTest {
         doThrow(new RuntimeException("Task not found")).when(taskService).deleteTask(invalidTaskId);
 
         // Act & Assert: Perform a DELETE request and expect a 404 Not Found status.
-        mockMvc.perform(delete("/api/tasks/{id}", invalidTaskId))
+        mockMvc.perform(delete("/tasks/{id}", invalidTaskId))
                 .andExpect(status().isNotFound());
     }
 }
