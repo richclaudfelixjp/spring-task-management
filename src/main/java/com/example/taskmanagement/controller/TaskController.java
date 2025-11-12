@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
  * This class defines the API endpoints for CRUD operations on tasks.
  */
 @RestController
-@RequestMapping("/tasks") // Base path for all endpoints in this controller
+@RequestMapping("/task") // Base path for all endpoints in this controller
 public class TaskController {
 
     private final TaskService taskService;

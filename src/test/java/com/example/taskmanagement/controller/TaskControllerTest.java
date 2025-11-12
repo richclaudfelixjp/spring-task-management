@@ -57,7 +57,7 @@ public class TaskControllerTest {
         when(taskService.getAllTasks()).thenReturn(allTasks);
 
         // Act & Assert
-        mockMvc.perform(get("/tasks"))
+        mockMvc.perform(get("/task"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.length()").value(2))
@@ -79,7 +79,7 @@ public class TaskControllerTest {
         when(taskService.getTaskById(task.getId())).thenReturn(Optional.of(task));
 
         // Act & Assert
-        mockMvc.perform(get("/tasks").param("id", String.valueOf(task.getId())))
+        mockMvc.perform(get("/task").param("id", String.valueOf(task.getId())))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.id").value(task.getId()))
@@ -95,7 +95,7 @@ public class TaskControllerTest {
         when(taskService.getTaskById(invalidId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/tasks").param("id", String.valueOf(invalidId)))
+        mockMvc.perform(get("/task").param("id", String.valueOf(invalidId)))
                 .andExpect(status().isNotFound());
     }
 
@@ -118,7 +118,7 @@ public class TaskControllerTest {
 
         when(taskService.getTasksByCompletionStatus(true)).thenReturn(completedTasks);
         // Act & Assert
-        mockMvc.perform(get("/tasks").param("completed", "true"))
+        mockMvc.perform(get("/task").param("completed", "true"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.length()").value(1))
@@ -129,7 +129,7 @@ public class TaskControllerTest {
 
     @Test
     void getTasks_whenInvalidCompleted_shouldBadRequest() throws Exception {
-        mockMvc.perform(get("/tasks").param("completed", "invalid"))
+        mockMvc.perform(get("/task").param("completed", "invalid"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -150,7 +150,7 @@ public class TaskControllerTest {
         when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
         
         // Act & Assert
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/task")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated()) // 2. Change to isCreated() for a 201 status
@@ -178,7 +178,7 @@ public class TaskControllerTest {
         when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
         
         // Act & Assert
-        mockMvc.perform(post("/tasks")
+        mockMvc.perform(post("/task")
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest()); // 2. Change to isBadRequest() for a 400 status
@@ -198,7 +198,7 @@ public class TaskControllerTest {
         when(taskService.updateTask(any(Task.class))).thenReturn(Optional.of(updateDetails));
 
         // Act & Assert
-        mockMvc.perform(put("/tasks") // The URL is correct for your controller
+        mockMvc.perform(put("/task") // The URL is correct for your controller
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateDetails)))
                 .andExpect(status().isOk())
@@ -217,7 +217,7 @@ public class TaskControllerTest {
         when(taskService.updateTask(any(Task.class))).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(put("/tasks") // The URL is correct
+        mockMvc.perform(put("/task") // The URL is correct
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateDetailsWithInvalidId)))
                 .andExpect(status().isNotFound());                
@@ -229,7 +229,7 @@ public class TaskControllerTest {
         doNothing().when(taskService).deleteAllTasks();
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
-        mockMvc.perform(delete("/tasks"))
+        mockMvc.perform(delete("/task"))
                 .andExpect(status().isNoContent());
     }
 
@@ -241,7 +241,7 @@ public class TaskControllerTest {
         doNothing().when(taskService).deleteTask(taskId);
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
-        mockMvc.perform(delete("/tasks/{id}", taskId))
+        mockMvc.perform(delete("/task/{id}", taskId))
                 .andExpect(status().isNotFound());
     }
 
@@ -254,7 +254,7 @@ public class TaskControllerTest {
         doThrow(new RuntimeException("Task not found")).when(taskService).deleteTask(invalidTaskId);
 
         // Act & Assert: Perform a DELETE request and expect a 404 Not Found status.
-        mockMvc.perform(delete("/tasks/{id}", invalidTaskId))
+        mockMvc.perform(delete("/task/{id}", invalidTaskId))
                 .andExpect(status().isNotFound());
     }
 }
