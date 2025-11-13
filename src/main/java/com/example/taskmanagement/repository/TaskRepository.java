@@ -3,6 +3,8 @@ package com.example.taskmanagement.repository;
 import com.example.taskmanagement.model.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import com.example.taskmanagement.model.User;
+import java.util.Optional;
 
 import java.util.List;
 
@@ -30,4 +32,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Spring Data JPA would automatically implement this method for us based on its name.
 
     List<Task> findByCompleted(Boolean completed);
+
+    List<Task> findByUser(User user);
+
+    Optional<Task> findByIdAndUser(Long id, User user);
+
+    List<Task> findByCompletedAndUser(Boolean completed, User user);
+
+    void deleteByUser(User user);
 }

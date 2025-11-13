@@ -54,7 +54,7 @@ public class TaskControllerTest {
         
         List<Task> allTasks = Arrays.asList(task1, task2);
 
-        when(taskService.getAllTasks()).thenReturn(allTasks);
+        //when(taskService.getAllTasks()).thenReturn(allTasks);
 
         // Act & Assert
         mockMvc.perform(get("/task"))
@@ -76,7 +76,7 @@ public class TaskControllerTest {
         task.setDescription("description1");
         task.setCompleted(false);
 
-        when(taskService.getTaskById(task.getId())).thenReturn(Optional.of(task));
+        //when(taskService.getTaskById(task.getId())).thenReturn(Optional.of(task));
 
         // Act & Assert
         mockMvc.perform(get("/task").param("id", String.valueOf(task.getId())))
@@ -92,7 +92,7 @@ public class TaskControllerTest {
     void getTasks_whenInvalidId_shouldReturnNotFound() throws Exception {
         // Arrange
         Long invalidId = 99L;
-        when(taskService.getTaskById(invalidId)).thenReturn(Optional.empty());
+        //when(taskService.getTaskById(invalidId)).thenReturn(Optional.empty());
 
         // Act & Assert
         mockMvc.perform(get("/task").param("id", String.valueOf(invalidId)))
@@ -116,7 +116,7 @@ public class TaskControllerTest {
 
         List<Task> completedTasks = Arrays.asList(task1);
 
-        when(taskService.getTasksByCompletionStatus(true)).thenReturn(completedTasks);
+        //when(taskService.getTasksByCompletionStatus(true)).thenReturn(completedTasks);
         // Act & Assert
         mockMvc.perform(get("/task").param("completed", "true"))
                 .andExpect(status().isOk())
@@ -147,7 +147,7 @@ public class TaskControllerTest {
         savedTask.setCompleted(false);
 
         // Use any() for a more robust mock
-        when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
+        //when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
         
         // Act & Assert
         mockMvc.perform(post("/task")
@@ -175,7 +175,7 @@ public class TaskControllerTest {
         savedTask.setCompleted(false);
 
         // Use any() for a more robust mock
-        when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
+        //when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
         
         // Act & Assert
         mockMvc.perform(post("/task")
@@ -195,7 +195,7 @@ public class TaskControllerTest {
 
         // Mock the one service method that is actually called.
         // It should return an Optional containing the updated task.
-        when(taskService.updateTask(any(Task.class))).thenReturn(Optional.of(updateDetails));
+        //when(taskService.updateTask(any(Task.class))).thenReturn(Optional.of(updateDetails));
 
         // Act & Assert
         mockMvc.perform(put("/task") // The URL is correct for your controller
@@ -214,7 +214,7 @@ public class TaskControllerTest {
         updateDetailsWithInvalidId.setTitle("This should not be saved");
 
         // Mock the service to return an empty Optional, simulating "not found".
-        when(taskService.updateTask(any(Task.class))).thenReturn(Optional.empty());
+        //when(taskService.updateTask(any(Task.class))).thenReturn(Optional.empty());
 
         // Act & Assert
         mockMvc.perform(put("/task") // The URL is correct
@@ -226,7 +226,7 @@ public class TaskControllerTest {
     @Test
     void deleteTasks_whenNoId_shouldDeleteAllTasks() throws Exception {
         // Arrange: Mock the service to do nothing when deleteAllTasks is called.
-        doNothing().when(taskService).deleteAllTasks();
+        //doNothing().when(taskService).deleteAllTasks();
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
         mockMvc.perform(delete("/task"))
@@ -238,7 +238,7 @@ public class TaskControllerTest {
         // Arrange
         Long taskId = 1L;
         // For a void method, use doNothing(). This says "when deleteTask(1L) is called, do nothing and don't throw an exception."
-        doNothing().when(taskService).deleteTask(taskId);
+        //doNothing().when(taskService).deleteTask(taskId);
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
         mockMvc.perform(delete("/task/{id}", taskId))
@@ -251,7 +251,7 @@ public class TaskControllerTest {
         Long invalidTaskId = 99L;
         // For the negative case, mock the service to throw an exception when the ID is not found.
         // This is a common pattern for services.
-        doThrow(new RuntimeException("Task not found")).when(taskService).deleteTask(invalidTaskId);
+        //doThrow(new RuntimeException("Task not found")).when(taskService).deleteTask(invalidTaskId);
 
         // Act & Assert: Perform a DELETE request and expect a 404 Not Found status.
         mockMvc.perform(delete("/task/{id}", invalidTaskId))

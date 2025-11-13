@@ -1,12 +1,6 @@
 # spring-task-management
 
-./mvnw spring-boot:run
+本プロジェクトは Spring Boot の基本学習用です。
 
-## Running the Application
-
-To run this application, you will need to set the following environment variables:
-
-*   `JWT_SECRET`: A long, random, and secure string used for signing authentication tokens.
-*   `DB_URL`: The JDBC URL for your database.
-*   `DB_USERNAME`: The username for your database.
-*   `DB_PASSWORD`: The password for your database.
+実際のポートフォリオはこちらをご覧ください：
+https://github.com/richclaudfelixjp/spring-ecommerce

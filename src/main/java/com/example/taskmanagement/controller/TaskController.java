@@ -6,6 +6,8 @@ import com.example.taskmanagement.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -41,17 +43,16 @@ public class TaskController {
      */
     @GetMapping
     public ResponseEntity<?> getTasks(@RequestParam(required = false) Long id,
-                                      @RequestParam(required = false) Boolean completed) {
-        // Case 1: An 'id' parameter is provided.
+                                      @RequestParam(required = false) Boolean completed,
+                                      @AuthenticationPrincipal UserDetails userDetails) {
         if (id != null) {
-            return taskService.getTaskById(id)
-                        .<ResponseEntity<?>>map(ResponseEntity::ok)
-                        .orElse(ResponseEntity.notFound().build());
+            return taskService.getTaskById(id, userDetails.getUsername())
+                    .<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
         } else if (completed != null) {
-            // Case 2: A 'completed' parameter is provided. Return tasks filtered by completion status.
-            return ResponseEntity.ok(taskService.getTasksByCompletionStatus(completed));
+            return ResponseEntity.ok(taskService.getTasksByCompletionStatus(completed, userDetails.getUsername()));
         } else {
-            return ResponseEntity.ok(taskService.getAllTasks());
+            return ResponseEntity.ok(taskService.getAllTasks(userDetails.getUsername()));
         }
     }
 
@@ -63,8 +64,9 @@ public class TaskController {
      * @return The created task with a 201 Created status.
      */
     @PostMapping
-    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskCreationRequest taskRequest) {
-        Task createdTask = taskService.createTask(taskRequest);
+    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskCreationRequest taskRequest,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
+        Task createdTask = taskService.createTask(taskRequest, userDetails.getUsername());
         return new ResponseEntity<>(createdTask, HttpStatus.CREATED);
     }
 
@@ -77,8 +79,9 @@ public class TaskController {
      * @return A ResponseEntity containing the updated task, or a 404 Not Found status if not.
      */
     @PutMapping
-    public ResponseEntity<Task> updateTask(@RequestBody Task taskDetails) {
-        return taskService.updateTask(taskDetails)
+    public ResponseEntity<Task> updateTask(@RequestBody Task taskDetails,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
+        return taskService.updateTask(taskDetails, userDetails.getUsername())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -93,16 +96,18 @@ public class TaskController {
      * @return A ResponseEntity with a 204 No Content status on success, or an error status.
      */
     @DeleteMapping
-    public ResponseEntity<Void> deleteTasks(@RequestParam(required = false) Long id) {
+    public ResponseEntity<Void> deleteTasks(@RequestParam(required = false) Long id,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
         // Case 1: An 'id' parameter is provided. Delete the specific task.
         if (id != null) {
-            if (!taskService.getTaskById(id).isPresent()) {
-                return ResponseEntity.noContent().build();
+            if (!taskService.getTaskById(id, userDetails.getUsername()).isPresent()) {
+                return ResponseEntity.notFound().build();
             }
-            taskService.deleteTask(id);
+            taskService.deleteTask(id, userDetails.getUsername());
+            return ResponseEntity.noContent().build();
         } else {
             // If no ID is provided, delete all tasks.
-            taskService.deleteAllTasks();
+            taskService.deleteAllTasks(userDetails.getUsername());
         }
         return ResponseEntity.noContent().build();
     }

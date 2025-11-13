@@ -5,9 +5,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.List;
+import jakarta.persistence.CascadeType;
 
 @Entity
-@Table(name = "app_user") // Using "app_user" as "user" can be a reserved keyword in some databases
+@Table(name = "app_users") // Using "app_user" as "user" can be a reserved keyword in some databases
 public class User {
 
     @Id
@@ -15,6 +20,9 @@ public class User {
     private Long id;
     private String username;
     private String password;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> tasks;
 
     // Constructors, Getters and Setters
 
