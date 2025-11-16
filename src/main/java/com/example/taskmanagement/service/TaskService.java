@@ -5,7 +5,6 @@ import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.model.User;
 import com.example.taskmanagement.repository.TaskRepository;
 import com.example.taskmanagement.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,11 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * The service layer for the Task entity.
- * This class contains the business logic for task management.
- * It acts as an intermediary between the controller and the repository.
- */
 @Service
 public class TaskService {
 
@@ -25,12 +19,8 @@ public class TaskService {
     private final UserRepository userRepository;
 
     /**
-     * Constructor-based dependency injection.
-     * Spring will automatically "inject" an instance of TaskRepository here.
-     *
      * @param taskRepository The repository for accessing task data.
      */
-    @Autowired
     public TaskService(TaskRepository taskRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;

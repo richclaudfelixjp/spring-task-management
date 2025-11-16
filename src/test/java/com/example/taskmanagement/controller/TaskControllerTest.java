@@ -1,40 +1,79 @@
 package com.example.taskmanagement.controller;
+
+import com.example.taskmanagement.config.JwtRequestFilter;
+import com.example.taskmanagement.config.SecurityConfig;
 import com.example.taskmanagement.dto.TaskCreationRequest;
 import com.example.taskmanagement.model.Task;
 import com.example.taskmanagement.service.TaskService;
+import com.example.taskmanagement.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post; // 1. Add this import
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskController.class)
+@Import({SecurityConfig.class, JwtUtil.class, JwtRequestFilter.class})
 public class TaskControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private TaskService taskService;
+
+    @MockitoBean
+    private com.example.taskmanagement.service.UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    private String token;
+    private final String testUser = "testuser";
+
+    @BeforeAll
+    static void setupEnv() {
+        Dotenv dotenv = Dotenv.load();
+        System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
+        System.setProperty("DB_URL", dotenv.get("DB_URL"));
+        System.setProperty("DB_USERNAME", dotenv.get("DB_USERNAME"));
+        System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+    }
+
+    @BeforeEach
+    void setup() {
+        UserDetails userDetails = new User(testUser, "password", new ArrayList<>());
+        when(userService.loadUserByUsername(testUser)).thenReturn(userDetails);
+        token = jwtUtil.generateToken(userDetails);
+    }
 
     @Test
     void getTasks_whenNoId_shouldReturnAllTasks() throws Exception {
@@ -51,13 +90,13 @@ public class TaskControllerTest {
         task2.setTitle("title2");
         task2.setDescription("description2");
         task2.setCompleted(false);
-        
+
         List<Task> allTasks = Arrays.asList(task1, task2);
 
-        //when(taskService.getAllTasks()).thenReturn(allTasks);
+        when(taskService.getAllTasks(testUser)).thenReturn(allTasks);
 
         // Act & Assert
-        mockMvc.perform(get("/task"))
+        mockMvc.perform(get("/task").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.length()").value(2))
@@ -76,10 +115,10 @@ public class TaskControllerTest {
         task.setDescription("description1");
         task.setCompleted(false);
 
-        //when(taskService.getTaskById(task.getId())).thenReturn(Optional.of(task));
+        when(taskService.getTaskById(task.getId(), testUser)).thenReturn(Optional.of(task));
 
         // Act & Assert
-        mockMvc.perform(get("/task").param("id", String.valueOf(task.getId())))
+        mockMvc.perform(get("/task").param("id", String.valueOf(task.getId())).header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.id").value(task.getId()))
@@ -92,33 +131,26 @@ public class TaskControllerTest {
     void getTasks_whenInvalidId_shouldReturnNotFound() throws Exception {
         // Arrange
         Long invalidId = 99L;
-        //when(taskService.getTaskById(invalidId)).thenReturn(Optional.empty());
+        when(taskService.getTaskById(invalidId, testUser)).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(get("/task").param("id", String.valueOf(invalidId)))
+        mockMvc.perform(get("/task").param("id", String.valueOf(invalidId)).header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void getTasks_whenValidCompleted_shouldReturnCompletedTasks() throws Exception {
         Task task1 = new Task();
-        Task task2 = new Task();
-
         task1.setId(1L);
         task1.setTitle("title1");
         task1.setDescription("description1");
         task1.setCompleted(true);
 
-        task2.setId(2L);
-        task2.setTitle("title2");
-        task2.setDescription("description2");
-        task2.setCompleted(false);
+        List<Task> completedTasks = Collections.singletonList(task1);
 
-        List<Task> completedTasks = Arrays.asList(task1);
-
-        //when(taskService.getTasksByCompletionStatus(true)).thenReturn(completedTasks);
+        when(taskService.getTasksByCompletionStatus(true, testUser)).thenReturn(completedTasks);
         // Act & Assert
-        mockMvc.perform(get("/task").param("completed", "true"))
+        mockMvc.perform(get("/task").param("completed", "true").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.length()").value(1))
@@ -129,13 +161,13 @@ public class TaskControllerTest {
 
     @Test
     void getTasks_whenInvalidCompleted_shouldBadRequest() throws Exception {
-        mockMvc.perform(get("/task").param("completed", "invalid"))
+        mockMvc.perform(get("/task").param("completed", "invalid").header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void createTasks_whenValidTitle_shouldBeSuccessfulRequest() throws Exception {
-        
+
         TaskCreationRequest request = new TaskCreationRequest();
         request.setTitle("New Test Task");
         request.setDescription("A description for the test task.");
@@ -146,14 +178,14 @@ public class TaskControllerTest {
         savedTask.setDescription(request.getDescription());
         savedTask.setCompleted(false);
 
-        // Use any() for a more robust mock
-        //when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
-        
+        when(taskService.createTask(any(TaskCreationRequest.class), eq(testUser))).thenReturn(savedTask);
+
         // Act & Assert
         mockMvc.perform(post("/task")
+                .header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated()) // 2. Change to isCreated() for a 201 status
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.title").value("New Test Task"))
@@ -163,25 +195,17 @@ public class TaskControllerTest {
 
     @Test
     void createTasks_whenInvalidTitle_shouldBeBadRequest() throws Exception {
-        
+
         TaskCreationRequest request = new TaskCreationRequest();
         request.setTitle(""); // Invalid title
         request.setDescription("A description for the test task.");
 
-        Task savedTask = new Task();
-        savedTask.setId(1L);
-        savedTask.setTitle(request.getTitle());
-        savedTask.setDescription(request.getDescription());
-        savedTask.setCompleted(false);
-
-        // Use any() for a more robust mock
-        //when(taskService.createTask(any(TaskCreationRequest.class))).thenReturn(savedTask);
-        
         // Act & Assert
         mockMvc.perform(post("/task")
+                .header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest()); // 2. Change to isBadRequest() for a 400 status
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -193,12 +217,11 @@ public class TaskControllerTest {
         updateDetails.setDescription("Updated Description");
         updateDetails.setCompleted(true);
 
-        // Mock the one service method that is actually called.
-        // It should return an Optional containing the updated task.
-        //when(taskService.updateTask(any(Task.class))).thenReturn(Optional.of(updateDetails));
+        when(taskService.updateTask(any(Task.class), eq(testUser))).thenReturn(Optional.of(updateDetails));
 
         // Act & Assert
-        mockMvc.perform(put("/task") // The URL is correct for your controller
+        mockMvc.perform(put("/task")
+                .header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateDetails)))
                 .andExpect(status().isOk())
@@ -213,23 +236,23 @@ public class TaskControllerTest {
         updateDetailsWithInvalidId.setId(99L); // Use an ID that doesn't exist
         updateDetailsWithInvalidId.setTitle("This should not be saved");
 
-        // Mock the service to return an empty Optional, simulating "not found".
-        //when(taskService.updateTask(any(Task.class))).thenReturn(Optional.empty());
+        when(taskService.updateTask(any(Task.class), eq(testUser))).thenReturn(Optional.empty());
 
         // Act & Assert
-        mockMvc.perform(put("/task") // The URL is correct
+        mockMvc.perform(put("/task")
+                .header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .content(objectMapper.writeValueAsString(updateDetailsWithInvalidId)))
-                .andExpect(status().isNotFound());                
+                .andExpect(status().isNotFound());
     }
-    
+
     @Test
     void deleteTasks_whenNoId_shouldDeleteAllTasks() throws Exception {
         // Arrange: Mock the service to do nothing when deleteAllTasks is called.
-        //doNothing().when(taskService).deleteAllTasks();
+        doNothing().when(taskService).deleteAllTasks(testUser);
 
         // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
-        mockMvc.perform(delete("/task"))
+        mockMvc.perform(delete("/task").header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
     }
 
@@ -237,11 +260,9 @@ public class TaskControllerTest {
     void deleteTasks_whenValidId_shouldDeleteTask() throws Exception {
         // Arrange
         Long taskId = 1L;
-        // For a void method, use doNothing(). This says "when deleteTask(1L) is called, do nothing and don't throw an exception."
-        //doNothing().when(taskService).deleteTask(taskId);
+        when(taskService.deleteTask(taskId, testUser)).thenReturn(true);
 
-        // Act & Assert: Perform a DELETE request and expect a 204 No Content status.
-        mockMvc.perform(delete("/task/{id}", taskId))
+        mockMvc.perform(delete("/task").param("id", String.valueOf(taskId)).header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
 
@@ -249,12 +270,9 @@ public class TaskControllerTest {
     void deleteTasks_whenInvalidId_shouldReturnNotFound() throws Exception {
         // Arrange
         Long invalidTaskId = 99L;
-        // For the negative case, mock the service to throw an exception when the ID is not found.
-        // This is a common pattern for services.
-        //doThrow(new RuntimeException("Task not found")).when(taskService).deleteTask(invalidTaskId);
+        when(taskService.deleteTask(invalidTaskId, testUser)).thenReturn(false);
 
-        // Act & Assert: Perform a DELETE request and expect a 404 Not Found status.
-        mockMvc.perform(delete("/task/{id}", invalidTaskId))
+        mockMvc.perform(delete("/task").param("id", String.valueOf(invalidTaskId)).header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
 }
